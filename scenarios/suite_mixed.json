@@ -1,0 +1,6 @@
+{
+  "scenarios": [
+    {"name": "expected_business_failure", "file": "suite_intentional_failure.json"},
+    {"name": "still_runs_conditionals", "file": "conditional_transactions.json"}
+  ]
+}

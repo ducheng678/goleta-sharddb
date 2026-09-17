@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sharddb"
+version = "0.1.0"
+description = "Deterministic fault-injection demonstrator for a sharded transactional KV store"
+requires-python = ">=3.13"
+
+[tool.setuptools]
+packages = ["sharddb", "sharddb.engine"]
+
+[project.scripts]
+sharddb-devhost = "sharddb.devhost:main"

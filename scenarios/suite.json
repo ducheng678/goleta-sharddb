@@ -1,0 +1,7 @@
+{
+  "scenarios": [
+    {"name": "healthy_migration", "file": "healthy_migration.json"},
+    {"name": "rebalance_exchange", "file": "rebalance_exchange.json"},
+    {"name": "conditional_transactions", "file": "conditional_transactions.json"}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "initial": {
+    "keys": {"a": 100, "b": 100, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "unresolved-attempt", "request": {"op": "txn", "txn_id": "pending-x", "delta_map": {"a": -3, "b": 3}}},
+    {"action": "rounds", "count": 8},
+    {"action": "crash", "worker": "coord"},
+    {"action": "request", "label": "move", "request": {"op": "rebalance", "plan_id": "move-while-coord-off", "moves": {"A": "a_target"}}},
+    {"action": "request", "label": "c-write", "request": {"op": "txn", "txn_id": "c-offline", "delta_map": {"c": 13}}},
+    {"action": "await", "label": "c-write", "max_rounds": 1000},
+    {"action": "request", "label": "c-read", "request": {"op": "snapshot", "read_id": "c-offline-read", "keys": ["c"]}},
+    {"action": "await", "label": "c-read", "max_rounds": 1000},
+    {"action": "assert_values", "label": "c-read", "equals": {"c": 13}},
+    {"action": "await", "label": "move", "max_rounds": 2000},
+    {"action": "assert_response", "label": "move", "equals": {"plan_id": "move-while-coord-off", "status": "COMPLETE", "owners": {"A": {"owner": "a_target", "epoch": 1, "migration_id": "move-while-coord-off"}}}},
+    {"action": "restart", "worker": "coord"},
+    {"action": "request", "label": "pending-retry", "request": {"op": "txn", "txn_id": "pending-x", "delta_map": {"a": -3, "b": 3}}},
+    {"action": "await", "label": "pending-retry", "max_rounds": 10000},
+    {"action": "assert_response", "label": "pending-retry", "equals": {"txn_id": "pending-x", "status": "COMMITTED"}},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "recovery-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 10000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 97, "b": 103, "c": 13}}
+  ]
+}

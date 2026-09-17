@@ -1,0 +1,40 @@
+{
+  "initial": {
+    "keys": {"a": 100, "b": 100, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "single-ok", "request": {"op": "conditional_txn", "txn_id": "ct-single-ok", "expected": {"a": 100}, "delta_map": {"a": 1}}},
+    {"action": "await", "label": "single-ok", "max_rounds": 1000},
+    {"action": "assert_response", "label": "single-ok", "equals": {"txn_id": "ct-single-ok", "status": "COMMITTED"}},
+    {"action": "request", "label": "single-retry", "request": {"op": "conditional_txn", "txn_id": "ct-single-ok", "expected": {"a": 100}, "delta_map": {"a": 1}}},
+    {"action": "await", "label": "single-retry", "max_rounds": 1000},
+    {"action": "assert_response", "label": "single-retry", "equals": {"txn_id": "ct-single-ok", "status": "COMMITTED"}},
+    {"action": "request", "label": "single-no", "request": {"op": "conditional_txn", "txn_id": "ct-single-no", "expected": {"a": 100}, "delta_map": {"a": 9}}},
+    {"action": "await", "label": "single-no", "max_rounds": 1000},
+    {"action": "assert_response", "label": "single-no", "equals": {"txn_id": "ct-single-no", "status": "ABORTED"}},
+    {"action": "request", "label": "single-no-status", "request": {"op": "status", "txn_id": "ct-single-no"}},
+    {"action": "await", "label": "single-no-status", "max_rounds": 1000},
+    {"action": "assert_response", "label": "single-no-status", "equals": {"txn_id": "ct-single-no", "status": "ABORTED"}},
+    {"action": "request", "label": "cross-ok", "request": {"op": "conditional_txn", "txn_id": "ct-cross-ok", "expected": {"a": 101, "b": 100}, "delta_map": {"a": -7, "b": 7}}},
+    {"action": "await", "label": "cross-ok", "max_rounds": 10000},
+    {"action": "assert_response", "label": "cross-ok", "equals": {"txn_id": "ct-cross-ok", "status": "COMMITTED"}},
+    {"action": "request", "label": "cross-no", "request": {"op": "conditional_txn", "txn_id": "ct-cross-no", "expected": {"a": 101, "b": 107}, "delta_map": {"a": 5, "b": -5}}},
+    {"action": "await", "label": "cross-no", "max_rounds": 10000},
+    {"action": "assert_response", "label": "cross-no", "equals": {"txn_id": "ct-cross-no", "status": "ABORTED"}},
+    {"action": "request", "label": "condition-only-key", "request": {"op": "conditional_txn", "txn_id": "ct-condition-key", "expected": {"b": 107}, "delta_map": {"a": 1}}},
+    {"action": "await", "label": "condition-only-key", "max_rounds": 10000},
+    {"action": "request", "label": "together", "request": {"op": "rebalance", "plan_id": "cond-together", "moves": {"A": "b"}}},
+    {"action": "await", "label": "together", "max_rounds": 2000},
+    {"action": "request", "label": "colocated", "request": {"op": "conditional_txn", "txn_id": "ct-colocated", "expected": {"a": 95, "b": 107}, "delta_map": {"a": 2, "b": -2}}},
+    {"action": "await", "label": "colocated", "max_rounds": 10000},
+    {"action": "crash", "worker": "b"},
+    {"action": "restart", "worker": "b"},
+    {"action": "request", "label": "cross-retry-after-restart", "request": {"op": "conditional_txn", "txn_id": "ct-cross-ok", "expected": {"a": 101, "b": 100}, "delta_map": {"a": -7, "b": 7}}},
+    {"action": "await", "label": "cross-retry-after-restart", "max_rounds": 10000},
+    {"action": "assert_response", "label": "cross-retry-after-restart", "equals": {"txn_id": "ct-cross-ok", "status": "COMMITTED"}},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "conditional-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 10000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 97, "b": 105, "c": 0}}
+  ]
+}

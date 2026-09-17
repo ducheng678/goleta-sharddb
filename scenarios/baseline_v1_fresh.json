@@ -1,0 +1,15 @@
+{
+  "initial": {
+    "keys": {"a": 41, "b": -2, "c": 9},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "v1-write", "request": {"op": "txn", "txn_id": "v1-c", "delta_map": {"c": 1}}},
+    {"action": "await", "label": "v1-write", "max_rounds": 1000},
+    {"action": "crash", "worker": "c"},
+    {"action": "restart", "worker": "c"},
+    {"action": "request", "label": "v1-final", "request": {"op": "snapshot", "read_id": "v1-final-read", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "v1-final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "v1-final", "equals": {"a": 41, "b": -2, "c": 10}}
+  ]
+}

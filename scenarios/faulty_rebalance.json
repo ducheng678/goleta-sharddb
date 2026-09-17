@@ -1,0 +1,26 @@
+{
+  "initial": {
+    "keys": {"a": 5, "b": 8, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "network_rule", "rule": {"type": "PLAN_INSTALL", "duplicate": 1, "late_duplicate": 180, "count": 1}},
+    {"action": "request", "label": "p1", "request": {"op": "rebalance", "plan_id": "p1", "moves": {"A": "b"}}},
+    {"action": "rounds", "count": 8},
+    {"action": "crash", "worker": "b"},
+    {"action": "restart", "worker": "b"},
+    {"action": "await", "label": "p1", "max_rounds": 2000},
+    {"action": "drop_completion", "op": "cas_owners", "count": 1},
+    {"action": "request", "label": "p2", "request": {"op": "rebalance", "plan_id": "p2", "moves": {"A": "a_target"}}},
+    {"action": "await", "label": "p2", "max_rounds": 2000},
+    {"action": "request", "label": "p3", "request": {"op": "rebalance", "plan_id": "p3", "moves": {"A": "b"}}},
+    {"action": "await", "label": "p3", "max_rounds": 2000},
+    {"action": "rounds", "count": 220},
+    {"action": "request", "label": "late-safe", "request": {"op": "txn", "txn_id": "after-late", "delta_map": {"a": 4}}},
+    {"action": "await", "label": "late-safe", "max_rounds": 1000},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "late-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 9, "b": 8, "c": 0}},
+    {"action": "assert_owners", "equals": {"A": {"owner": "b", "epoch": 3, "migration_id": "p3"}, "B": {"owner": "b", "epoch": 0, "migration_id": null}, "C": {"owner": "c", "epoch": 0, "migration_id": null}}}
+  ]
+}

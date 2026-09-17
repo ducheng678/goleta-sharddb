@@ -1,0 +1,26 @@
+{
+  "initial": {
+    "keys": {"a": 100, "b": 100, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "network_rule", "rule": {"type": "READ_RELEASE", "drop": true, "count": 1}},
+    {"action": "request", "label": "read-before-restart", "request": {"op": "snapshot", "read_id": "read-before-restart-final", "keys": ["a", "b"]}},
+    {"action": "await", "label": "read-before-restart", "max_rounds": 1000},
+    {"action": "assert_values", "label": "read-before-restart", "equals": {"a": 100, "b": 100}},
+    {"action": "crash", "worker": "coord"},
+    {"action": "restart", "worker": "coord"},
+    {"action": "request", "label": "healthy-write-first", "request": {"op": "txn", "txn_id": "healthy-after-restart-final", "delta_map": {"a": 1}}},
+    {"action": "await", "label": "healthy-write-first", "max_rounds": 1000},
+    {"action": "rounds", "count": 90},
+    {"action": "request", "label": "healthy-write", "request": {"op": "txn", "txn_id": "healthy-after-restart-final", "delta_map": {"a": 1}}},
+    {"action": "await", "label": "healthy-write", "max_rounds": 1000},
+    {"action": "assert_response", "label": "healthy-write", "equals": {"txn_id": "healthy-after-restart-final", "status": "COMMITTED"}},
+    {"action": "request", "label": "healthy-write-repeat", "request": {"op": "txn", "txn_id": "healthy-after-restart-final", "delta_map": {"a": 1}}},
+    {"action": "await", "label": "healthy-write-repeat", "max_rounds": 1000},
+    {"action": "assert_response", "label": "healthy-write-repeat", "equals": {"txn_id": "healthy-after-restart-final", "status": "COMMITTED"}},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "read-release-recovery-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 101, "b": 100, "c": 0}}
+  ]
+}

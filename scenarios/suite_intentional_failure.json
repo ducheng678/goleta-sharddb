@@ -1,0 +1,13 @@
+{
+  "initial": {
+    "keys": {"c": 0},
+    "key_shards": {"c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "write", "request": {"op": "txn", "txn_id": "suite-write", "delta_map": {"c": 1}}},
+    {"action": "await", "label": "write", "max_rounds": 1000},
+    {"action": "request", "label": "read", "request": {"op": "snapshot", "read_id": "suite-read", "keys": ["c"]}},
+    {"action": "await", "label": "read", "max_rounds": 1000},
+    {"action": "assert_values", "label": "read", "equals": {"c": 999}}
+  ]
+}

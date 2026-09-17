@@ -1,0 +1,24 @@
+{
+  "initial": {
+    "keys": {"a": 100, "b": 100, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "network_rule", "rule": {"type": "READ_RELEASE", "drop": true, "count": 1}},
+    {"action": "request", "label": "read", "request": {"op": "snapshot", "read_id": "read-release-move", "keys": ["a", "b"]}},
+    {"action": "await", "label": "read", "max_rounds": 1000},
+    {"action": "assert_values", "label": "read", "equals": {"a": 100, "b": 100}},
+    {"action": "crash", "worker": "coord"},
+    {"action": "request", "label": "move", "request": {"op": "migrate", "shard": "A", "target": "a_target"}},
+    {"action": "await", "label": "move", "max_rounds": 2000},
+    {"action": "assert_response", "label": "move", "equals": {"shard": "A", "target": "a_target", "status": "COMPLETE", "epoch": 1}},
+    {"action": "restart", "worker": "coord"},
+    {"action": "rounds", "count": 90},
+    {"action": "request", "label": "healthy-write", "request": {"op": "txn", "txn_id": "write-after-read-move", "delta_map": {"a": 1}}},
+    {"action": "await", "label": "healthy-write", "max_rounds": 1000},
+    {"action": "assert_response", "label": "healthy-write", "equals": {"txn_id": "write-after-read-move", "status": "COMMITTED"}},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "read-release-move-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 101, "b": 100, "c": 0}}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "initial": {
+    "keys": {"a": 1, "b": 2, "c": 3},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "together", "request": {"op": "rebalance", "plan_id": "together", "moves": {"A": "b"}}},
+    {"action": "await", "label": "together", "max_rounds": 2000},
+    {"action": "request", "label": "apart", "request": {"op": "rebalance", "plan_id": "apart", "moves": {"A": "a_target"}}},
+    {"action": "await", "label": "apart", "max_rounds": 2000},
+    {"action": "request", "label": "return", "request": {"op": "rebalance", "plan_id": "return", "moves": {"A": "a_old"}}},
+    {"action": "await", "label": "return", "max_rounds": 2000},
+    {"action": "request", "label": "old-retry", "request": {"op": "rebalance", "plan_id": "together", "moves": {"A": "b"}}},
+    {"action": "await", "label": "old-retry", "max_rounds": 1000},
+    {"action": "assert_response", "label": "old-retry", "equals": {"plan_id": "together", "status": "COMPLETE", "owners": {"A": {"owner": "b", "epoch": 1, "migration_id": "together"}}}},
+    {"action": "assert_owners", "equals": {"A": {"owner": "a_old", "epoch": 3, "migration_id": "return"}, "B": {"owner": "b", "epoch": 0, "migration_id": null}, "C": {"owner": "c", "epoch": 0, "migration_id": null}}}
+  ]
+}

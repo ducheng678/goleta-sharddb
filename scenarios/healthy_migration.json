@@ -1,0 +1,29 @@
+{
+  "initial": {
+    "keys": {"a": 100, "b": 100, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "t1", "request": {"op": "txn", "txn_id": "t1", "delta_map": {"a": -7, "b": 7}}},
+    {"action": "await", "label": "t1", "max_rounds": 1000},
+    {"action": "assert_response", "label": "t1", "equals": {"txn_id": "t1", "status": "COMMITTED"}},
+    {"action": "request", "label": "t1_retry", "request": {"op": "txn", "txn_id": "t1", "delta_map": {"a": -7, "b": 7}}},
+    {"action": "await", "label": "t1_retry", "max_rounds": 300},
+    {"action": "assert_response", "label": "t1_retry", "equals": {"txn_id": "t1", "status": "COMMITTED"}},
+    {"action": "request", "label": "ab", "request": {"op": "snapshot", "read_id": "r-ab", "keys": ["a", "b"]}},
+    {"action": "await", "label": "ab", "max_rounds": 1000},
+    {"action": "assert_values", "label": "ab", "equals": {"a": 93, "b": 107}},
+    {"action": "request", "label": "cwrite", "request": {"op": "txn", "txn_id": "c-plus", "delta_map": {"c": 13}}},
+    {"action": "await", "label": "cwrite", "max_rounds": 300},
+    {"action": "request", "label": "move-a", "request": {"op": "migrate", "shard": "A", "target": "a_target"}},
+    {"action": "await", "label": "move-a", "max_rounds": 2000},
+    {"action": "assert_response", "label": "move-a", "equals": {"shard": "A", "target": "a_target", "status": "COMPLETE", "epoch": 1}},
+    {"action": "crash", "worker": "a_old"},
+    {"action": "request", "label": "target-service", "request": {"op": "txn", "txn_id": "a-target-after-source-down", "delta_map": {"a": 0}}},
+    {"action": "await", "label": "target-service", "max_rounds": 1000},
+    {"action": "assert_response", "label": "target-service", "equals": {"txn_id": "a-target-after-source-down", "status": "COMMITTED"}},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "r-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 93, "b": 107, "c": 13}}
+  ]
+}

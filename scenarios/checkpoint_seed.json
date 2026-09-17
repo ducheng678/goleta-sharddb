@@ -1,0 +1,15 @@
+{
+  "initial": {
+    "keys": {"a": 10, "b": 10, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "seed-txn", "request": {"op": "txn", "txn_id": "seed-txn", "delta_map": {"a": -2, "b": 2}}},
+    {"action": "await", "label": "seed-txn", "max_rounds": 10000},
+    {"action": "request", "label": "seed-plan", "request": {"op": "rebalance", "plan_id": "seed-together", "moves": {"A": "b"}}},
+    {"action": "await", "label": "seed-plan", "max_rounds": 2000},
+    {"action": "request", "label": "seed-read", "request": {"op": "snapshot", "read_id": "seed-read", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "seed-read", "max_rounds": 10000},
+    {"action": "assert_values", "label": "seed-read", "equals": {"a": 8, "b": 12, "c": 0}}
+  ]
+}

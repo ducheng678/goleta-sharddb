@@ -1,0 +1,16 @@
+{
+  "initial": {
+    "keys": {"a": 1, "b": 2, "c": 3},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "rounds", "count": 5},
+    {"action": "drop_completion", "op": "persist", "count": 1},
+    {"action": "request", "label": "persist-lost", "request": {"op": "txn", "txn_id": "persist-lost", "delta_map": {"c": 4}}},
+    {"action": "await", "label": "persist-lost", "max_rounds": 1000},
+    {"action": "assert_response", "label": "persist-lost", "equals": {"txn_id": "persist-lost", "status": "COMMITTED"}},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "persist-lost-final", "keys": ["c"]}},
+    {"action": "await", "label": "final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "final", "equals": {"c": 7}}
+  ]
+}

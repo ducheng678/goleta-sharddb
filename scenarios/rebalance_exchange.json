@@ -1,0 +1,16 @@
+{
+  "initial": {
+    "keys": {"a": 10, "b": 20, "c": 0},
+    "key_shards": {"a": "A", "b": "B", "c": "C"}
+  },
+  "steps": [
+    {"action": "request", "label": "swap", "request": {"op": "rebalance", "plan_id": "swap-1", "moves": {"A": "b", "B": "a_old"}}},
+    {"action": "await", "label": "swap", "max_rounds": 2000},
+    {"action": "assert_response", "label": "swap", "equals": {"plan_id": "swap-1", "status": "COMPLETE", "owners": {"A": {"owner": "b", "epoch": 1, "migration_id": "swap-1"}, "B": {"owner": "a_old", "epoch": 1, "migration_id": "swap-1"}}}},
+    {"action": "request", "label": "post", "request": {"op": "txn", "txn_id": "post-swap", "delta_map": {"a": 4, "b": -4}}},
+    {"action": "await", "label": "post", "max_rounds": 1000},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "exchange-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 1000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 14, "b": 16, "c": 0}}
+  ]
+}

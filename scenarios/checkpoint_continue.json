@@ -1,0 +1,15 @@
+{
+  "steps": [
+    {"action": "request", "label": "old-txn", "request": {"op": "txn", "txn_id": "seed-txn", "delta_map": {"a": -2, "b": 2}}},
+    {"action": "await", "label": "old-txn", "max_rounds": 10000},
+    {"action": "assert_response", "label": "old-txn", "equals": {"txn_id": "seed-txn", "status": "COMMITTED"}},
+    {"action": "request", "label": "old-plan", "request": {"op": "rebalance", "plan_id": "seed-together", "moves": {"A": "b"}}},
+    {"action": "await", "label": "old-plan", "max_rounds": 2000},
+    {"action": "assert_response", "label": "old-plan", "equals": {"plan_id": "seed-together", "status": "COMPLETE", "owners": {"A": {"owner": "b", "epoch": 1, "migration_id": "seed-together"}}}},
+    {"action": "request", "label": "new-condition", "request": {"op": "conditional_txn", "txn_id": "restored-condition", "expected": {"a": 8, "b": 12}, "delta_map": {"a": 1, "b": -1}}},
+    {"action": "await", "label": "new-condition", "max_rounds": 10000},
+    {"action": "request", "label": "final", "request": {"op": "snapshot", "read_id": "restore-final", "keys": ["a", "b", "c"]}},
+    {"action": "await", "label": "final", "max_rounds": 10000},
+    {"action": "assert_values", "label": "final", "equals": {"a": 9, "b": 11, "c": 0}}
+  ]
+}
